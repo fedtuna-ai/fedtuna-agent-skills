@@ -12,15 +12,15 @@ manifests share one skill (`plugins/agenix/skills/agenix/SKILL.md`).
 ## Codex
 
 ```bash
-codex plugin marketplace add veryviolet/agenix-skills
-codex plugin add agenix@veryviolet-agenix
+codex plugin marketplace add fedtuna-ai/fedtuna-agent-skills
+codex plugin add agenix@fedtuna-agent-skills
 ```
 
 ## Claude Code
 
 ```
-/plugin marketplace add veryviolet/agenix-skills
-/plugin install agenix@veryviolet-agenix
+/plugin marketplace add fedtuna-ai/fedtuna-agent-skills
+/plugin install agenix@fedtuna-agent-skills
 ```
 
 ## Layout
