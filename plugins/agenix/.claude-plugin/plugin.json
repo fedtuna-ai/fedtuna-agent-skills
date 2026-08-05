@@ -1,0 +1,8 @@
+{
+  "name": "agenix",
+  "version": "0.1.0",
+  "description": "agenix — engine for agents that improve themselves: profiles, knowledge as files, any executor.",
+  "author": {
+    "name": "veryviolet"
+  }
+}

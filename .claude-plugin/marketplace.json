@@ -1,0 +1,14 @@
+{
+  "name": "veryviolet-agenix",
+  "owner": {
+    "name": "veryviolet"
+  },
+  "description": "agenix \u2014 an engine for agents that improve themselves.",
+  "plugins": [
+    {
+      "name": "agenix",
+      "source": "./plugins/agenix",
+      "description": "agenix \u2014 profiles, knowledge as files, any executor, and rounds that grow the agent."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "agenix",
+  "version": "0.1.0",
+  "description": "agenix — engine for agents that improve themselves: profiles, knowledge as files, any executor.",
+  "author": {
+    "name": "veryviolet",
+    "url": "https://github.com/veryviolet"
+  },
+  "homepage": "https://agenix.fedtuna.ai/docs/",
+  "repository": "https://github.com/veryviolet/agenix-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "agenix",
+    "agents",
+    "self-improving",
+    "executors",
+    "knowledge"
+  ],
+  "skills": "./skills/"
+}

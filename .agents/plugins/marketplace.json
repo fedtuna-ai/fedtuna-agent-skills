@@ -1,0 +1,19 @@
+{
+  "name": "veryviolet-agenix",
+  "interface": {
+    "displayName": "agenix"
+  },
+  "plugins": [
+    {
+      "name": "agenix",
+      "source": {
+        "source": "local",
+        "path": "./plugins/agenix"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
