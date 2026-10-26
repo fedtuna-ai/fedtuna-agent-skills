@@ -13,14 +13,14 @@ manifests share one skill (`plugins/agenix/skills/agenix/SKILL.md`).
 
 ```bash
 codex plugin marketplace add fedtuna-ai/fedtuna-agent-skills
-codex plugin add agenix@fedtuna-agent-skills
+codex plugin add agenix@agenix-skills
 ```
 
 ## Claude Code
 
 ```
 /plugin marketplace add fedtuna-ai/fedtuna-agent-skills
-/plugin install agenix@fedtuna-agent-skills
+/plugin install agenix@agenix-skills
 ```
 
 ## Layout
