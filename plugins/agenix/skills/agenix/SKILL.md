@@ -1,15 +1,14 @@
 ---
 name: agenix
-description: "Use agenix — an engine for building agents that improve themselves: write a profile, keep the agent's knowledge as files, run it on any executor (claude-code, codex, cline, aider, goose, …), evaluate it, teach it, and grow it. Use when the repo has a profile.yaml with a `route:`, when the user mentions agenix or its CLI, or when work involves running one agent across several executors or models."
+description: "Use agenix — an engine for building agents that improve themselves: write a profile, keep the agent's knowledge as files, run it on any of its executors (claude-code, codex, openhands, qwen-code, grok-cli), evaluate it, teach it, and grow it. Use when the repo has a profile.yaml with a `route:`, when the user mentions agenix or its CLI, or when work involves running one agent across several executors or models."
 ---
 
 # Using agenix
 
 agenix separates three things that are usually tangled together: **what an agent
 knows** (files you can read and diff), **what runs it** (an executor CLI —
-claude-code, codex, cline, aider, goose, opencode, openhands, qwen-code,
-gemini-cli, grok-cli, mini-swe-agent, swe-agent), and **how it reaches a model**
-(a provider and a credential). Swap any one without touching the other two.
+claude-code, codex, openhands, qwen-code, grok-cli), and **how it reaches a
+model** (a provider and a credential). Swap any one without touching the other two.
 
 This is the shared reference; each agent tool wraps this content in its own
 format.
@@ -24,40 +23,45 @@ agenix doctor -p profile.yaml         # says what is missing before you run
 
 The executor is a separate program and agenix does not install it. `agenix
 agents` lists the ones it knows; install the one you want the normal way
-(`npm i -g @anthropic-ai/claude-code`, `npm i -g @openai/codex`, `npm i -g
-cline`, …).
+(`npm i -g @anthropic-ai/claude-code`, `npm i -g @openai/codex`, …).
 
 ## Rules agents get wrong — read first
 
 1. **A model id names its provider: `<provider>/<model>`.** The provider table
    already knows the address, and writing a second one beside it is an error:
    ```yaml
-   route: { executor: cline, model: deepseek/deepseek-v4-pro }        # RIGHT
-   # route: { executor: cline, model: deepseek/deepseek-v4-pro,
+   route: { executor: openhands, model: deepseek/deepseek-v4-pro,
+            auth: { mode: api-key }, credential: deepseek }           # RIGHT
+   # route: { executor: openhands, model: deepseek/deepseek-v4-pro,
+   #          auth: { mode: api-key }, credential: deepseek,
    #          baseUrl: https://api.deepseek.com/v1 }                   # WRONG — refused
    ```
    For an endpoint the engine cannot know — a proxy, a vLLM, LM Studio, GitHub
    Models — there is exactly one form, and it needs the address **including the
    path the server actually serves on**:
    ```yaml
-   route: { executor: cline, model: openai-compatible/qwen2.5-coder:14b,
-            baseUrl: http://localhost:11434/v1 }     # Ollama's OpenAI surface is /v1
+   route: { executor: qwen-code, model: openai-compatible/qwen2.5-coder:14b,
+            baseUrl: http://localhost:11434/v1,      # Ollama's OpenAI surface is /v1
+            auth: { mode: env, apiKeyEnv: OPENAI_API_KEY } }   # export OPENAI_API_KEY=ollama
    ```
 2. **`builtin` is not a model name.** It means "whatever this executor's own
    login runs" — a ChatGPT plan for codex, a Claude plan for claude-code. A bare
    id with no provider (`sonnet`, `opus`, `gemini-2.5-pro`) means the executor's
    own model too, and is passed through to it.
-3. **Under `auth.mode: subscription`, a stored token is used only if the profile
-   names it.** Otherwise the executor's own login file is in charge, and if
-   there isn't one you get "Not logged in" from a profile that looks configured:
+3. **Under `auth.mode: subscription`, only claude-code can use a stored token.**
+   An explicitly named credential must exist. If the profile names none,
+   agenix checks the `claude-code` entry, then uses Claude's native login. codex, qwen-code and grok-cli
+   always use their own login; openhands has no subscription mode. With no
+   token and no login you get "Not logged in" from a profile that looks
+   configured:
    ```yaml
    route:
      executor: claude-code
      model: opus
      auth: { mode: subscription, credential: claude-code }   # names the stored token
    ```
-4. **`-x/--executor` swaps the executor and nothing else.** The profile's auth
-   mode stays. Swapping a subscription profile onto an api-key executor fails
+4. **`-x/--executor` swaps the executor and keeps the model and the auth
+   mode.** Only the previous executor's `extraArgs` are dropped. Swapping a subscription profile onto an api-key executor fails
    with "has no subscription auth" — write a small profile instead of fighting
    the flag.
 5. **Keys never travel in argv.** `agenix auth set <name>` reads the key from
@@ -65,7 +69,8 @@ cline`, …).
 6. **`agenix run` needs `-m`**, and `agenix models` needs `-a` even when you
    pass `-p`.
 7. **With layered knowledge, writes land in the LAST layer.** Everything below
-   it is read-only by construction, not by file permissions.
+   it is left alone unless `teach --into` names another declared layer; nothing
+   here relies on file permissions.
 8. **A timeout is about silence, not duration.** `--timeout` is how long an
    executor may say *nothing* before it is treated as wedged; work that keeps
    reporting keeps going. `--ceiling` (a day by default) is the backstop for
@@ -101,7 +106,7 @@ mcpServers:
 | mode | what it means |
 |---|---|
 | `inherit` | inject nothing; the executor's ambient environment is in charge |
-| `subscription` | the executor's own plan login (plus a stored token when named) |
+| `subscription` | the executor's own plan login (claude-code can use a stored token instead) |
 | `api-key` | a key from the credential store, named by `credential:` |
 | `env` | a key already in the environment, named by `apiKeyEnv:` |
 
@@ -165,13 +170,13 @@ store; a *login* is the executor signing into its own account.
 agenix auth set openrouter     # reads the key from stdin
 agenix auth list               # names only — values are never printed
 agenix auth login codex        # device code, a token, or the tool's own UI
-agenix auth status             # per executor: signed in, how, and whether it still works
+agenix auth status             # subscription login status, verified where supported
 ```
 
 **Knowing what it can run.**
 ```bash
 agenix agents                              # executors, and how each authenticates
-agenix models -a cline -p profile.yaml     # asked of the executor, live
+agenix models -a codex -p profile.yaml     # the codex catalog, or the profile's gateway catalog
 agenix doctor -p profile.yaml              # binary, auth, knowledge, gateway
 ```
 
@@ -180,7 +185,7 @@ agenix doctor -p profile.yaml              # binary, auth, knowledge, gateway
 agenix teach -p profile.yaml "always report the exact command you ran"
 agenix eval -p profile.yaml -s suites/smoke.yaml
 agenix audit -s suites/smoke.yaml          # can a task pass WITHOUT doing the work?
-agenix compare -p a.yaml -p b.yaml -s suites/smoke.yaml   # paired A/B with a sign test
+agenix compare -a a.yaml -b b.yaml -s suites/smoke.yaml   # paired A/B with a sign test
 ```
 
 A suite task is a prompt and a checker — a shell command that must succeed in the
@@ -201,9 +206,9 @@ weaker executor tries those tasks on the changed Mind, and the judge accepts or
 sends it back.
 
 ```bash
-agenix grow -p profile.yaml                            # the agent chooses
-agenix grow -p profile.yaml --task "master EDA on tabular data"
-agenix grow -p profile.yaml --journal ./round.jsonl    # for something else to watch
+agenix evolve -p profile.yaml                          # the agent chooses
+agenix evolve -p profile.yaml --task "master EDA on tabular data"
+agenix evolve -p profile.yaml --journal ./round.jsonl  # for something else to watch
 agenix serve -p profile.yaml                           # a face for it, on the loopback
 ```
 
@@ -215,8 +220,8 @@ evolution:
   worker: { executor: claude-code, model: opus, auth: { mode: subscription, credential: claude-code } }
   second: { executor: codex, model: gpt-5.6-sol, reasoning: high, auth: { mode: subscription } }
   weak:
-    - { executor: cline, model: openrouter/mistralai/ministral-8b-2512, auth: { mode: api-key }, credential: openrouter }
-    - { executor: cline, model: openrouter/mistralai/ministral-3b-2512, auth: { mode: api-key }, credential: openrouter }
+    - { executor: openhands, model: openrouter/mistralai/ministral-8b-2512, auth: { mode: api-key }, credential: openrouter }
+    - { executor: openhands, model: openrouter/mistralai/ministral-3b-2512, auth: { mode: api-key }, credential: openrouter }
 ```
 
 `agenix serve` has no authentication by design: it binds to the loopback and is
@@ -228,7 +233,7 @@ ssh -N -L 7777:127.0.0.1:7777 <host>    # then open http://127.0.0.1:7777
 **Recording what happened.**
 ```bash
 agenix usage -p profile.yaml --software flower --data cifar10 --server lattice-a --outcome ok
-agenix feedback -p profile.yaml --score 0.8 --note "found the leak, missed the imbalance"
+agenix feedback --outcome bad --note "found the leak, missed the imbalance"
 ```
 
 ## Recipes
@@ -241,20 +246,27 @@ agenix run -p profile.yaml -x codex --model builtin -m "the task"
 **A local model through Ollama.** Its OpenAI surface is under `/v1`, and the
 provider table's address is not — so name it as a custom endpoint:
 ```yaml
-route: { executor: cline, model: openai-compatible/qwen2.5-coder:14b, baseUrl: http://localhost:11434/v1 }
+route:
+  executor: qwen-code
+  model: openai-compatible/qwen2.5-coder:14b
+  baseUrl: http://localhost:11434/v1
+  auth: { mode: env, apiKeyEnv: OPENAI_API_KEY }   # export OPENAI_API_KEY=ollama; the server needs no key
 ```
 
-**A gateway (LiteLLM, on-prem proxy)** for every executor at once: point the
-route at `openai-compatible/<model>` with the proxy's address, and store the
-gateway's key under a name.
+**A gateway (LiteLLM, on-prem proxy)** for the executors that speak its
+protocol (not grok-cli, which ignores a base URL): point the route at
+`openai-compatible/<model>` with the proxy's address, store the gateway's key
+under a name, and select it with `auth.mode: api-key` and `route.credential`.
 
-**Teach from inside a session.** Every session is told: when the user says
+**Teach from inside a session.** A teachable session is told: when the user says
 "remember that …", persist it by running
 ```bash
 agenix teach -p "$AGENIX_PROFILE" "<the statement>"
 ```
-which becomes a reviewable commit in the knowledge directory. Four executors
-(claude, codex, gemini, qwen) also get a native `/teach` command.
+which becomes a reviewable commit in the knowledge directory, or a suggestion
+if the policy rejects it. In teachable sessions three executors (claude,
+codex, qwen) also get a native `/teach` command; codex only when it runs with
+a workspace `CODEX_HOME`.
 
 ## When something does not work
 
@@ -264,8 +276,8 @@ which becomes a reviewable commit in the knowledge directory. Four executors
 | `openai-compatible needs a baseUrl` | a custom endpoint with no address |
 | `"deepseek" has an address of its own` | a baseUrl beside a table provider — drop the baseUrl |
 | `a bare model has no endpoint` | `model: qwen2.5-coder` + a baseUrl — write `openai-compatible/qwen2.5-coder` |
-| `Not logged in` from a subscription profile | no stored token named, and no executor login file — `agenix auth login <executor>`, or name the credential |
+| `Not logged in` from a subscription profile | no executor login file (and, for claude-code, no stored token) — `agenix auth login <executor>` |
 | `has no subscription auth` | `-x` swapped to an api-key executor while the profile says subscription |
 | `credential "x" not found` | `agenix auth set x` |
 | `said nothing for Ns` | the executor went silent and was treated as wedged; raise `--timeout` only if it was genuinely thinking |
-| the executor's shell calls are all refused | headless executors deny their own tools until told otherwise — claude needs `extraArgs: ["--allowedTools", "Bash"]`, codex `["--sandbox", "danger-full-access"]`, gemini/qwen `--yolo` |
+| the executor's shell calls are all refused | claude denies its own tools until told otherwise: `extraArgs: ["--allowedTools", "Bash"]`. codex defaults to `--sandbox workspace-write` and qwen already runs with `--yolo` |
