@@ -1,14 +1,15 @@
 ---
 name: agenix
-description: "Use agenix — an engine for building agents that improve themselves: write a profile, keep the agent's knowledge as files, run it on any of its executors (claude-code, codex, openhands, qwen-code, grok-cli), evaluate it, teach it, and grow it. Use when the repo has a profile.yaml with a `route:`, when the user mentions agenix or its CLI, or when work involves running one agent across several executors or models."
+description: "Use agenix — an engine for building agents that improve themselves: write a profile, keep the agent's knowledge as files, run it on any of its executors (claude-code, codex, openhands, qwen-code, grok-cli, margaret), evaluate it, teach it, and grow it. Use when the repo has a profile.yaml with a `route:`, when the user mentions agenix or its CLI, or when work involves running one agent across several executors or models."
 ---
 
 # Using agenix
 
 agenix separates three things that are usually tangled together: **what an agent
 knows** (files you can read and diff), **what runs it** (an executor CLI —
-claude-code, codex, openhands, qwen-code, grok-cli), and **how it reaches a
-model** (a provider and a credential). Swap any one without touching the other two.
+claude-code, codex, openhands, qwen-code, grok-cli, or margaret, Fedtuna's own
+harness), and **how it reaches a model** (a provider and a credential). You can
+switch executors while keeping the Mind and any route the new executor supports.
 
 This is the shared reference; each agent tool wraps this content in its own
 format.
@@ -268,6 +269,20 @@ if the policy rejects it. In teachable sessions three executors (claude,
 codex, qwen) also get a native `/teach` command; codex only when it runs with
 a workspace `CODEX_HOME`.
 
+**margaret, Fedtuna's own harness.** Nothing is compiled for it: it reads the
+Mind from its layers itself. It needs a model on an OpenAI-compatible endpoint
+whose server supports constrained output (`response_format` with a JSON
+schema), and it has no subscription login, no MCP servers and no native chat:
+```yaml
+route:
+  executor: margaret
+  model: openai-compatible/qwen3-vl
+  baseUrl: http://localhost:8000/v1
+  auth: { mode: env, apiKeyEnv: MARGARET_LOCAL_KEY }   # export it, even for a server that wants no key
+```
+It cannot yet be the executor that `evolve`, `learn` or `distill` hand a
+candidate Mind to.
+
 ## When something does not work
 
 | what you see | what it means |
@@ -279,5 +294,6 @@ a workspace `CODEX_HOME`.
 | `Not logged in` from a subscription profile | no executor login file (and, for claude-code, no stored token) — `agenix auth login <executor>` |
 | `has no subscription auth` | `-x` swapped to an api-key executor while the profile says subscription |
 | `credential "x" not found` | `agenix auth set x` |
+| `margaret needs a model on an OpenAI-compatible endpoint` | the route has no OpenAI-compatible endpoint. Use `openai-compatible/<model>` with `baseUrl` set to the server's OpenAI-compatible API base |
 | `said nothing for Ns` | the executor went silent and was treated as wedged; raise `--timeout` only if it was genuinely thinking |
 | the executor's shell calls are all refused | claude denies its own tools until told otherwise: `extraArgs: ["--allowedTools", "Bash"]`. codex defaults to `--sandbox workspace-write` and qwen already runs with `--yolo` |
