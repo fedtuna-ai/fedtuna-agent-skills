@@ -280,8 +280,9 @@ route:
   baseUrl: http://localhost:8000/v1
   auth: { mode: env, apiKeyEnv: MARGARET_LOCAL_KEY }   # export it, even for a server that wants no key
 ```
-It cannot yet be the executor that `evolve`, `learn` or `distill` hand a
-candidate Mind to.
+It can be the weak executor of an `evolve` round and the executor of `learn`
+and `distill`: the engine builds each candidate Mind on disk, where margaret
+reads it.
 
 ## When something does not work
 
