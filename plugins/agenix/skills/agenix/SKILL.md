@@ -272,7 +272,8 @@ a workspace `CODEX_HOME`.
 **margaret, Fedtuna's own harness.** Nothing is compiled for it: it reads the
 Mind from its layers itself. It needs a model on an OpenAI-compatible endpoint
 whose server supports constrained output (`response_format` with a JSON
-schema), and it has no subscription login, no MCP servers and no native chat:
+schema), and it has no subscription login and no MCP servers. It keeps its own
+sessions in the workspace, and `agenix chat --native` opens its own TUI:
 ```yaml
 route:
   executor: margaret
