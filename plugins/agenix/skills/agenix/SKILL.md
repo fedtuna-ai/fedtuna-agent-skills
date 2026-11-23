@@ -273,7 +273,10 @@ a workspace `CODEX_HOME`.
 Mind from its layers itself. It needs a model on an OpenAI-compatible endpoint
 whose server supports constrained output (`response_format` with a JSON
 schema), and it has no subscription login and no MCP servers. It keeps its own
-sessions in the workspace, and `agenix chat --native` opens its own TUI:
+sessions in the workspace, and its notes of the work there
+(`.margaret/notes.jsonl`): a later run in the same workspace begins with what
+it noted before, so use a fresh workspace for a run that must not know of an
+earlier one. `agenix chat --native` opens its own TUI:
 ```yaml
 route:
   executor: margaret
