@@ -1,6 +1,6 @@
 ---
 name: agenix
-description: "Use agenix — an engine for building agents that improve themselves: write a profile, keep the agent's knowledge as files, run it on any of its executors (claude-code, codex, openhands, qwen-code, grok-cli, margaret), evaluate it, teach it, and grow it. Use when the repo has a profile.yaml with a `route:`, when the user mentions agenix or its CLI, or when work involves running one agent across several executors or models."
+description: "Use agenix — an engine for building agents that improve themselves: write a profile, keep the agent's knowledge as files, run it on any of its executors (claude-code, codex, openhands, qwen-code, grok-cli, margaret), evaluate it, teach it, train it from a skill made for a frontier model, and grow it. Use when the repo has a profile.yaml with a `route:`, when the user mentions agenix or its CLI, or when work involves running one agent across several executors or models."
 ---
 
 # Using agenix
@@ -200,6 +200,39 @@ tasks:
     checker: grep -qx "hello agenix" hello.txt
     timeoutS: 180
 ```
+
+**Training.** For carrying what a person made for a frontier model — a skill,
+rules, notes, in any form — into the Mind of a small agent. It is a different
+thing from a round (below): the tasks are fixed beforehand, and their checkers
+decide.
+
+```bash
+agenix train -p student.yaml --teacher teacher.yaml \
+  --material ./my-skill -s suites/the-work.yaml \
+  --about-student notes-on-the-student.md --level level.json
+```
+
+The teacher (a frontier executor) does every task with the material in
+`./material` of its workspace: the tasks it passes are the level. The student
+(the profile whose `knowledge` is trained) does them on its Mind as it stands.
+If it falls short, the teacher proposes changes; the student tries them on a
+candidate Mind, and every task of the level must pass before that Mind is
+saved. After a failed trial, what the student did on the tasks it failed goes
+back to the teacher, while a revision is left (`--revisions`, 2 by default).
+The student is never given the material.
+Outcomes: `trained` (the Mind is saved; committed where it is kept in git, and
+the outcome says so when that did not happen), `not-reached` (no changes kept
+in the Mind),
+`nothing-to-train`, `no-level` (the teacher passed nothing: look at the
+material and the checkers), `broken` (a turn never began, a checker could not
+be run, a task's `setup` failed — none of these is a measurement).
+
+For a suite used in training: every task id its own; a checker exits 0 for a
+pass, 126 or 127 when the check itself cannot be run (running out of its time
+counts as that too), anything else for a failed task; what it prints on a failure is shown to the teacher, so it says
+what went wrong and never the right answer. `--level` keeps the level in a
+file and takes it again next time — for the same teacher, tasks and material
+only.
 
 **Growing.** A round is: the agent decides what to take up, does it, writes down
 what it learned, another executor judges that writing and sets tasks from it, a
