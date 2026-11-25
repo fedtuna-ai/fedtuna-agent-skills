@@ -223,7 +223,7 @@ The student is never given the material.
 Outcomes: `trained` (the Mind is saved; committed where it is kept in git, and
 the outcome says so when that did not happen), `not-reached` (no changes kept
 in the Mind),
-`nothing-to-train`, `no-level` (the teacher passed nothing: look at the
+`nothing-to-train`, `no-level` (the teacher passed nothing, or nothing but held tasks: look at the
 material and the checkers), `broken` (a turn never began, a checker could not
 be run, a task's `setup` failed — none of these is a measurement).
 
@@ -232,7 +232,13 @@ pass, 126 or 127 when the check itself cannot be run (running out of its time
 counts as that too), anything else for a failed task; what it prints on a failure is shown to the teacher, so it says
 what went wrong and never the right answer. `--level` keeps the level in a
 file and takes it again next time — for the same teacher, tasks and material
-only.
+only. `--held <ids…>` holds tasks of the suite back from the teacher when it
+writes: those of them the teacher passes on the material are in the level
+like any other task and the student must pass them, but the teacher is not
+shown them and is told only how many of them the student failed (when the
+teacher passes none of them, the outcome says nothing was held back) — use
+it so that a Mind written to the shown tasks, and not to the work, is not
+kept. The suite file may not lie in the material.
 
 **Growing.** A round is: the agent decides what to take up, does it, writes down
 what it learned, another executor judges that writing and sets tasks from it, a
